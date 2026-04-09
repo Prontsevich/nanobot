@@ -360,20 +360,21 @@ class AgentLoop:
             # For file operations, show path instead of first arg
             if tc.name in PATH_TOOLS and isinstance(args, dict) and "path" in args:
                 path = args["path"]
-                display_val = path[:60] + "…" if len(path) > 60 else path
-                # Don't escape backticks in path, but escape other special chars
-                display_val = display_val.replace('\\', '\\\\')
-                return f"{emoji} **{tc.name}** — `{display_val}`"
+                # No truncation - show full path
+                # Convert markdown to HTML for Telegram
+                display_val = path.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+                return f"{emoji} <b>{tc.name}</b> — <code>{display_val}</code>"
             
             # For other tools, use first argument value
             val = next(iter(args.values()), None) if isinstance(args, dict) else None
             if not isinstance(val, str):
-                return f"{emoji} **{tc.name}**"
-            display_val = val[:40] + "…" if len(val) > 40 else val
-            # Escape special chars but preserve backticks for code
-            display_val = display_val.replace('\\', '\\\\')
-            return f"{emoji} **{tc.name}** — `{display_val}`"
-        return "\n" + "\n".join(_fmt(tc) for tc in tool_calls)
+                return f"{emoji} <b>{tc.name}</b>"
+            # No truncation - show full value
+            display_val = val.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+            return f"{emoji} <b>{tc.name}</b> — <code>{display_val}</code>"
+        # Wrap in HTML blockquote for expandable collapse
+        hints = "\n".join(_fmt(tc) for tc in tool_calls)
+        return f"<blockquote expandable>{hints}</blockquote>"
 
     async def _run_agent_loop(
         self,
