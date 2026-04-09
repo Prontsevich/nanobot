@@ -35,8 +35,20 @@ def _escape_telegram_html(text: str) -> str:
 
 
 def _tool_hint_to_telegram_blockquote(text: str) -> str:
-    """Render tool hints as an expandable blockquote (collapsed by default)."""
-    return f"<blockquote expandable>{_escape_telegram_html(text)}</blockquote>" if text else ""
+    """Render tool hints as an expandable blockquote with HTML formatting."""
+    if not text:
+        return ""
+    
+    # Convert markdown to HTML for tool hints
+    html = text
+    # Bold: **text** → <b>text</b>
+    html = re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', html)
+    # Code: `text` → <code>text</code>
+    html = re.sub(r'`([^`]+)`', r'<code>\1</code>', html)
+    # Escape remaining special chars
+    html = _escape_telegram_html(html)
+    
+    return f"<blockquote expandable>{html}</blockquote>"
 
 
 def _strip_md(s: str) -> str:
@@ -187,6 +199,7 @@ class TelegramConfig(Base):
     proxy: str | None = None
     reply_to_message: bool = False
     react_emoji: str = "👀"
+    set_message_reaction: bool = False
     group_policy: Literal["open", "mention"] = "mention"
     connection_pool_size: int = 32
     pool_timeout: float = 5.0
@@ -929,7 +942,8 @@ class TelegramChannel(BaseChannel):
                     "session_key": session_key,
                 }
                 self._start_typing(str_chat_id)
-                await self._add_reaction(str_chat_id, message.message_id, self.config.react_emoji)
+                if self.config.set_message_reaction:
+                    await self._add_reaction(str_chat_id, message.message_id, self.config.react_emoji)
             buf = self._media_group_buffers[key]
             if content and content != "[empty message]":
                 buf["contents"].append(content)
@@ -940,7 +954,8 @@ class TelegramChannel(BaseChannel):
 
         # Start typing indicator before processing
         self._start_typing(str_chat_id)
-        await self._add_reaction(str_chat_id, message.message_id, self.config.react_emoji)
+        if self.config.set_message_reaction:
+            await self._add_reaction(str_chat_id, message.message_id, self.config.react_emoji)
 
         # Forward to the message bus
         await self._handle_message(
