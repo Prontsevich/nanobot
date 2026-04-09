@@ -373,7 +373,7 @@ class AgentLoop:
             # Escape special chars but preserve backticks for code
             display_val = display_val.replace('\\', '\\\\')
             return f"{emoji} **{tc.name}** — `{display_val}`"
-        return "\n> " + "\n> ".join(_fmt(tc) for tc in tool_calls)
+        return "\n" + "\n".join(_fmt(tc) for tc in tool_calls)
 
     async def _run_agent_loop(
         self,
