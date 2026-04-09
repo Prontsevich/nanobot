@@ -39,14 +39,17 @@ def _tool_hint_to_telegram_blockquote(text: str) -> str:
     if not text:
         return ""
     
-    # Convert markdown to HTML for tool hints
+    # Convert markdown to HTML
     html = text
     # Bold: **text** → <b>text</b>
     html = re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', html)
     # Code: `text` → <code>text</code>
     html = re.sub(r'`([^`]+)`', r'<code>\1</code>', html)
-    # Escape remaining special chars
-    html = _escape_telegram_html(html)
+    # Escape remaining HTML special chars (but not our tags)
+    html = html.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+    # Restore our HTML tags
+    html = html.replace('&lt;b&gt;', '<b>').replace('&lt;/b&gt;', '</b>')
+    html = html.replace('&lt;code&gt;', '<code>').replace('&lt;/code&gt;', '</code>')
     
     return f"<blockquote expandable>{html}</blockquote>"
 

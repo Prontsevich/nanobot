@@ -361,20 +361,15 @@ class AgentLoop:
             if tc.name in PATH_TOOLS and isinstance(args, dict) and "path" in args:
                 path = args["path"]
                 # No truncation - show full path
-                # Convert markdown to HTML for Telegram
-                display_val = path.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
-                return f"{emoji} <b>{tc.name}</b> — <code>{display_val}</code>"
+                return f"{emoji} **{tc.name}** — `{path}`"
             
             # For other tools, use first argument value
             val = next(iter(args.values()), None) if isinstance(args, dict) else None
             if not isinstance(val, str):
-                return f"{emoji} <b>{tc.name}</b>"
+                return f"{emoji} **{tc.name}**"
             # No truncation - show full value
-            display_val = val.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
-            return f"{emoji} <b>{tc.name}</b> — <code>{display_val}</code>"
-        # Wrap in HTML blockquote for expandable collapse
-        hints = "\n".join(_fmt(tc) for tc in tool_calls)
-        return f"<blockquote expandable>{hints}</blockquote>"
+            return f"{emoji} **{tc.name}** — `{val}`"
+        return "\n".join(_fmt(tc) for tc in tool_calls)
 
     async def _run_agent_loop(
         self,
