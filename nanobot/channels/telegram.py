@@ -187,6 +187,7 @@ class TelegramConfig(Base):
     proxy: str | None = None
     reply_to_message: bool = False
     react_emoji: str = "👀"
+    set_message_reaction: bool = False
     group_policy: Literal["open", "mention"] = "mention"
     connection_pool_size: int = 32
     pool_timeout: float = 5.0
@@ -929,7 +930,8 @@ class TelegramChannel(BaseChannel):
                     "session_key": session_key,
                 }
                 self._start_typing(str_chat_id)
-                await self._add_reaction(str_chat_id, message.message_id, self.config.react_emoji)
+                if self.config.set_message_reaction:
+                    await self._add_reaction(str_chat_id, message.message_id, self.config.react_emoji)
             buf = self._media_group_buffers[key]
             if content and content != "[empty message]":
                 buf["contents"].append(content)
@@ -940,7 +942,8 @@ class TelegramChannel(BaseChannel):
 
         # Start typing indicator before processing
         self._start_typing(str_chat_id)
-        await self._add_reaction(str_chat_id, message.message_id, self.config.react_emoji)
+        if self.config.set_message_reaction:
+            await self._add_reaction(str_chat_id, message.message_id, self.config.react_emoji)
 
         # Forward to the message bus
         await self._handle_message(
